@@ -1,1371 +1,792 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Wanderlust — Trip Planner</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Lisbon Trip — Trip Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #f97316;
+  --orange-light: #fff7ed;
+  --orange-dark: #ea6c05;
+  --blue: #3b82f6;
+  --blue-light: #eff6ff;
+  --purple: #8b5cf6;
+  --purple-light: #f5f3ff;
+  --green-light: #f0fdf4;
+  --red-light: #fef2f2;
+  --red: #ef4444;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --white: #ffffff;
+  --sidebar-w: 390px;
+  --topbar-h: 54px;
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
+  --shadow: 0 4px 12px rgba(0,0,0,0.10);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,0.16);
+}
+body { font-family: 'Inter', sans-serif; background: var(--gray-100); color: var(--gray-900); height: 100vh; overflow: hidden; display: flex; flex-direction: column; font-size: 14px; }
 
-  :root {
-    --sand: #f5f0e8;
-    --sand-dark: #e8e0d0;
-    --ink: #1a1814;
-    --ink-mid: #3d3830;
-    --ink-light: #7a7265;
-    --terracotta: #c4623a;
-    --terracotta-light: #f0e4dc;
-    --forest: #2d5016;
-    --forest-light: #ddebc8;
-    --ocean: #1b4a6b;
-    --ocean-light: #d5e9f5;
-    --gold: #c9922b;
-    --gold-light: #fdf0d5;
-    --white: #ffffff;
-    --radius: 12px;
-    --shadow: 0 2px 16px rgba(26,24,20,0.08);
-    --shadow-hover: 0 6px 32px rgba(26,24,20,0.14);
-  }
+/* ─── TOP NAV ────────────────────────────────────────── */
+.topbar {
+  height: var(--topbar-h); background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  display: flex; align-items: center; padding: 0 16px; gap: 10px;
+  flex-shrink: 0; z-index: 100;
+}
+.logo { font-size: 1.05rem; font-weight: 800; color: var(--orange); letter-spacing: -0.03em; white-space: nowrap; }
+.topbar-sep { width: 1px; height: 20px; background: var(--gray-200); flex-shrink: 0; }
+.trip-info { display: flex; flex-direction: column; gap: 1px; }
+.trip-name { font-size: 0.88rem; font-weight: 700; color: var(--gray-800); white-space: nowrap; line-height: 1.2; }
+.trip-sub  { font-size: 0.68rem; color: var(--gray-400); white-space: nowrap; }
+.topbar-tabs { display: flex; gap: 2px; margin-left: 6px; }
+.topbar-tab {
+  padding: 5px 13px; border-radius: 20px; font-size: 0.75rem; font-weight: 500;
+  border: none; background: transparent; cursor: pointer; color: var(--gray-500);
+  transition: all 0.15s; font-family: 'Inter', sans-serif;
+}
+.topbar-tab:hover { background: var(--gray-100); color: var(--gray-700); }
+.topbar-tab.active { background: var(--orange-light); color: var(--orange); font-weight: 600; }
+.topbar-right { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.btn-sm {
+  padding: 5px 12px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 500;
+  border: 1px solid var(--gray-200); background: var(--white); color: var(--gray-600);
+  cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s;
+  display: flex; align-items: center; gap: 4px;
+}
+.btn-sm:hover { border-color: var(--gray-300); background: var(--gray-50); }
+.btn-primary {
+  padding: 5px 14px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600;
+  border: none; background: var(--orange); color: white;
+  cursor: pointer; font-family: 'Inter', sans-serif; transition: background 0.15s;
+  display: flex; align-items: center; gap: 4px;
+}
+.btn-primary:hover { background: var(--orange-dark); }
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--sand);
-    color: var(--ink);
-    min-height: 100vh;
-  }
+/* ─── MAIN LAYOUT ─────────────────────────────────────── */
+.app-body { flex: 1; display: flex; overflow: hidden; }
 
-  /* HEADER */
-  header {
-    background: var(--ink);
-    padding: 0 2rem;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 60px;
-  }
-  .logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.3rem;
-    color: var(--sand);
-    letter-spacing: 0.04em;
-  }
-  .logo span { color: var(--terracotta); font-style: italic; }
-  .header-actions { display: flex; gap: 10px; align-items: center; }
-  .btn-ghost {
-    background: transparent;
-    border: 1px solid rgba(245,240,232,0.25);
-    color: var(--sand);
-    padding: 6px 14px;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .btn-ghost:hover { background: rgba(245,240,232,0.1); }
-  .btn-primary {
-    background: var(--terracotta);
-    border: none;
-    color: white;
-    padding: 7px 16px;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-weight: 500;
-  }
-  .btn-primary:hover { background: #b5572f; }
+/* ─── SIDEBAR ─────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  background: var(--white); border-right: 1px solid var(--gray-200);
+  display: flex; flex-direction: column; overflow: hidden;
+}
 
-  /* HERO */
-  .hero {
-    background: linear-gradient(135deg, var(--ink) 0%, #2e2a24 60%, #3d3830 100%);
-    padding: 3.5rem 2rem 2.5rem;
-    position: relative;
-    overflow: hidden;
-  }
-  .hero::before {
-    content: '';
-    position: absolute;
-    top: -60px; right: -80px;
-    width: 320px; height: 320px;
-    border-radius: 50%;
-    background: rgba(196,98,58,0.12);
-  }
-  .hero::after {
-    content: '';
-    position: absolute;
-    bottom: -40px; left: 20%;
-    width: 200px; height: 200px;
-    border-radius: 50%;
-    background: rgba(201,146,43,0.08);
-  }
-  .hero-inner { max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
-  .trip-meta {
-    display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem;
-  }
-  .trip-tag {
-    background: rgba(196,98,58,0.2);
-    border: 1px solid rgba(196,98,58,0.4);
-    color: #e8a07a;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  .trip-date {
-    color: rgba(245,240,232,0.55);
-    font-size: 0.8rem;
-  }
-  .hero h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(2rem, 5vw, 3.2rem);
-    color: var(--sand);
-    line-height: 1.15;
-    margin-bottom: 0.5rem;
-  }
-  .hero h1 em { color: var(--terracotta); font-style: italic; }
-  .hero-sub {
-    color: rgba(245,240,232,0.6);
-    font-size: 0.9rem;
-    font-weight: 300;
-    margin-bottom: 2rem;
-  }
-  .trip-stats {
-    display: flex; gap: 2rem; flex-wrap: wrap;
-  }
-  .stat {
-    display: flex; flex-direction: column; gap: 2px;
-  }
-  .stat-value {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.6rem;
-    color: var(--sand);
-    line-height: 1;
-  }
-  .stat-label {
-    font-size: 0.72rem;
-    color: rgba(245,240,232,0.45);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-  .stat-sep {
-    width: 1px;
-    background: rgba(245,240,232,0.15);
-    align-self: stretch;
-    margin: 4px 0;
-  }
+/* Day selector */
+.day-strip {
+  background: var(--gray-50); border-bottom: 1px solid var(--gray-200);
+  display: flex; align-items: center; padding: 8px 12px; gap: 4px;
+  overflow-x: auto; flex-shrink: 0; scrollbar-width: none;
+}
+.day-strip::-webkit-scrollbar { display: none; }
+.day-btn {
+  padding: 4px 11px; border-radius: 20px; font-size: 0.7rem; font-weight: 500;
+  border: 1px solid var(--gray-200); background: var(--white);
+  cursor: pointer; color: var(--gray-500); white-space: nowrap;
+  transition: all 0.15s; font-family: 'Inter', sans-serif; flex-shrink: 0;
+}
+.day-btn:hover { border-color: var(--orange); color: var(--orange); }
+.day-btn.active { background: var(--orange); border-color: var(--orange); color: white; font-weight: 600; }
+.day-btn.all-btn.active { background: var(--gray-800); border-color: var(--gray-800); }
 
-  /* MAIN LAYOUT */
-  .main { max-width: 900px; margin: 0 auto; padding: 2rem; }
+/* Tab row */
+.type-tabs { display: flex; border-bottom: 1px solid var(--gray-200); flex-shrink: 0; }
+.type-tab {
+  flex: 1; padding: 9px 4px; font-size: 0.7rem; font-weight: 500;
+  border: none; border-bottom: 2px solid transparent; background: transparent;
+  cursor: pointer; color: var(--gray-400); font-family: 'Inter', sans-serif;
+  transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 3px;
+}
+.type-tab:hover { color: var(--gray-700); }
+.type-tab.active { color: var(--orange); border-bottom-color: var(--orange); font-weight: 600; }
+.tab-badge {
+  font-size: 0.6rem; background: var(--gray-100); color: var(--gray-500);
+  padding: 1px 5px; border-radius: 10px; font-weight: 500;
+}
+.type-tab.active .tab-badge { background: var(--orange-light); color: var(--orange); }
 
-  /* SECTION */
-  .section { margin-bottom: 2.5rem; }
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.2rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--sand-dark);
-  }
-  .section-title-group { display: flex; align-items: center; gap: 10px; }
-  .section-icon {
-    width: 32px; height: 32px;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1rem;
-    flex-shrink: 0;
-  }
-  .icon-hotel { background: var(--ocean-light); }
-  .icon-restaurant { background: var(--terracotta-light); }
-  .icon-poi { background: var(--forest-light); }
-  .section-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.15rem;
-    font-weight: 600;
-    color: var(--ink);
-  }
-  .section-count {
-    font-size: 0.75rem;
-    background: var(--sand-dark);
-    color: var(--ink-light);
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-weight: 500;
-  }
-  .btn-add {
-    background: white;
-    border: 1px solid var(--sand-dark);
-    color: var(--ink-mid);
-    padding: 6px 14px;
-    border-radius: 8px;
-    font-size: 0.78rem;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-weight: 500;
-  }
-  .btn-add:hover { border-color: var(--ink-light); box-shadow: var(--shadow); }
+/* Cards scroll area */
+.cards-area { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.cards-area::-webkit-scrollbar { width: 4px; }
+.cards-area::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 4px; }
 
-  /* CARDS GRID */
-  .cards-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1rem;
-  }
-  .card {
-    background: white;
-    border-radius: var(--radius);
-    border: 1px solid var(--sand-dark);
-    overflow: hidden;
-    transition: all 0.2s;
-    position: relative;
-  }
-  .card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
-  .card.flagged::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-  }
-  .card.flagged.hotel::before { background: var(--ocean); }
-  .card.flagged.restaurant::before { background: var(--terracotta); }
-  .card.flagged.poi::before { background: var(--forest); }
+/* Day group label */
+.day-group-label {
+  font-size: 0.65rem; font-weight: 700; color: var(--gray-400);
+  text-transform: uppercase; letter-spacing: 0.07em;
+  padding: 8px 2px 4px; display: flex; align-items: center; gap: 6px;
+}
+.day-group-label::after { content:''; flex:1; height:1px; background:var(--gray-100); }
 
-  .card-body { padding: 1rem 1.1rem; }
-  .card-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 0.5rem;
-  }
-  .card-name {
-    font-family: 'Playfair Display', serif;
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--ink);
-    line-height: 1.3;
-    flex: 1;
-    padding-right: 8px;
-  }
-  .card-actions { display: flex; gap: 4px; flex-shrink: 0; }
-  .action-btn {
-    width: 26px; height: 26px;
-    border-radius: 6px;
-    border: 1px solid var(--sand-dark);
-    background: transparent;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.75rem;
-    color: var(--ink-light);
-    transition: all 0.15s;
-  }
-  .action-btn:hover { background: var(--sand); color: var(--ink); }
-  .action-btn.flag-btn.active { background: var(--terracotta-light); border-color: var(--terracotta); color: var(--terracotta); }
-  .action-btn.flag-btn.active.hotel { background: var(--ocean-light); border-color: var(--ocean); color: var(--ocean); }
-  .action-btn.flag-btn.active.poi { background: var(--forest-light); border-color: var(--forest); color: var(--forest); }
+/* Place card */
+.place-card {
+  border: 1px solid var(--gray-200); border-radius: var(--radius);
+  background: var(--white); padding: 10px 11px;
+  display: flex; align-items: flex-start; gap: 9px;
+  cursor: pointer; transition: all 0.15s; position: relative;
+}
+.place-card:hover { border-color: var(--gray-300); box-shadow: var(--shadow-sm); background: var(--gray-50); }
+.place-card.selected { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(249,115,22,0.12); background: var(--orange-light); }
 
-  .card-meta {
-    display: flex; flex-direction: column; gap: 4px;
-  }
-  .card-detail {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 0.76rem;
-    color: var(--ink-light);
-  }
-  .card-detail-icon { font-size: 0.75rem; flex-shrink: 0; }
-  .card-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
-  .badge {
-    font-size: 0.68rem;
-    font-weight: 500;
-    padding: 2px 8px;
-    border-radius: 20px;
-    letter-spacing: 0.03em;
-  }
-  .badge-confirmed { background: #e8f5e2; color: #2d6b1a; border: 1px solid #c0dfaa; }
-  .badge-pending { background: var(--gold-light); color: #8a5e10; border: 1px solid #f2cc7a; }
-  .badge-cancelled { background: #fde8e8; color: #8a2020; border: 1px solid #f5b8b8; }
-  .badge-must { background: var(--terracotta-light); color: #8a3820; border: 1px solid #e5b09a; }
-  .badge-optional { background: var(--sand-dark); color: var(--ink-light); border: 1px solid #cfc9bc; }
-  .badge-booked { background: var(--ocean-light); color: #0e3855; border: 1px solid #a8ceea; }
-  .stars { color: var(--gold); font-size: 0.72rem; }
+/* Numbered badge */
+.place-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem; font-weight: 700; color: white; flex-shrink: 0; margin-top: 1px;
+}
+.n-hotel      { background: var(--blue); }
+.n-restaurant { background: var(--orange); }
+.n-poi        { background: var(--purple); }
 
-  /* DAY PLANNER */
-  .day-tabs {
-    display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.2rem;
-  }
-  .day-tab {
-    padding: 6px 14px;
-    border-radius: 8px;
-    border: 1px solid var(--sand-dark);
-    background: white;
-    font-size: 0.78rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    color: var(--ink-mid);
-    font-family: 'DM Sans', sans-serif;
-  }
-  .day-tab:hover { border-color: var(--ink-light); }
-  .day-tab.active { background: var(--ink); color: var(--sand); border-color: var(--ink); }
+.place-body { flex: 1; min-width: 0; }
+.place-kind { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1px; }
+.k-hotel      { color: var(--blue); }
+.k-restaurant { color: var(--orange); }
+.k-poi        { color: var(--purple); }
 
-  .timeline { display: flex; flex-direction: column; gap: 0; }
-  .timeline-item {
-    display: flex; gap: 1rem; align-items: flex-start;
-    padding: 0.9rem 0;
-    border-bottom: 1px dashed var(--sand-dark);
-    position: relative;
-  }
-  .timeline-item:last-child { border-bottom: none; }
-  .timeline-time {
-    font-size: 0.72rem;
-    color: var(--ink-light);
-    width: 44px;
-    flex-shrink: 0;
-    padding-top: 2px;
-    text-align: right;
-  }
-  .timeline-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    margin-top: 4px;
-    border: 2px solid white;
-  }
-  .dot-hotel { background: var(--ocean); }
-  .dot-restaurant { background: var(--terracotta); }
-  .dot-poi { background: var(--forest); }
-  .dot-transit { background: var(--ink-light); }
-  .timeline-content { flex: 1; }
-  .timeline-name {
-    font-size: 0.88rem;
-    font-weight: 500;
-    color: var(--ink);
-    margin-bottom: 2px;
-  }
-  .timeline-sub {
-    font-size: 0.74rem;
-    color: var(--ink-light);
-  }
-  .timeline-type {
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    font-weight: 500;
-    padding: 2px 7px;
-    border-radius: 4px;
-    flex-shrink: 0;
-    align-self: flex-start;
-  }
-  .type-hotel { background: var(--ocean-light); color: var(--ocean); }
-  .type-restaurant { background: var(--terracotta-light); color: var(--terracotta); }
-  .type-poi { background: var(--forest-light); color: var(--forest); }
-  .type-transit { background: var(--sand-dark); color: var(--ink-light); }
+.place-name { font-size: 0.83rem; font-weight: 600; color: var(--gray-800); line-height: 1.3; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.place-meta-row { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-bottom: 2px; }
+.pmeta { font-size: 0.69rem; color: var(--gray-400); display: flex; align-items: center; gap: 2px; }
+.place-note { font-size: 0.68rem; color: var(--gray-400); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pbadge {
+  font-size: 0.6rem; font-weight: 600; padding: 1px 6px; border-radius: 10px;
+  display: inline-flex; align-items: center;
+}
+.pb-confirmed { background: var(--green-light); color: #16a34a; }
+.pb-pending   { background: #fefce8; color: #a16207; }
+.pb-cancelled { background: var(--red-light); color: var(--red); }
+.pb-must      { background: var(--orange-light); color: var(--orange); }
+.pb-optional  { background: var(--gray-100); color: var(--gray-500); }
 
-  /* NOTES */
-  .notes-area {
-    background: white;
-    border: 1px solid var(--sand-dark);
-    border-radius: var(--radius);
-    padding: 1rem 1.2rem;
-  }
-  .notes-area textarea {
-    width: 100%;
-    border: none;
-    outline: none;
-    resize: none;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.85rem;
-    color: var(--ink-mid);
-    line-height: 1.7;
-    background: transparent;
-  }
-  .notes-area textarea::placeholder { color: var(--ink-light); }
+.card-actions { display: flex; gap: 1px; flex-shrink: 0; }
+.card-btn {
+  width: 24px; height: 24px; border-radius: var(--radius-sm);
+  border: none; background: transparent; cursor: pointer;
+  font-size: 0.75rem; color: var(--gray-300); transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.card-btn:hover { background: var(--gray-100); color: var(--gray-500); }
+.card-btn.on { color: var(--orange); }
 
-  /* MODAL */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(26,24,20,0.55);
-    z-index: 200;
-    display: flex; align-items: center; justify-content: center;
-    padding: 1rem;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.2s;
-  }
-  .modal-overlay.open { opacity: 1; pointer-events: all; }
-  .modal {
-    background: white;
-    border-radius: 16px;
-    width: 100%;
-    max-width: 480px;
-    padding: 1.5rem;
-    transform: translateY(16px);
-    transition: transform 0.2s;
-  }
-  .modal-overlay.open .modal { transform: translateY(0); }
-  .modal-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 1.2rem;
-  }
-  .modal-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.15rem;
-    color: var(--ink);
-  }
-  .modal-close {
-    width: 28px; height: 28px;
-    border-radius: 6px;
-    border: 1px solid var(--sand-dark);
-    background: transparent;
-    cursor: pointer;
-    font-size: 0.9rem;
-    color: var(--ink-light);
-    display: flex; align-items: center; justify-content: center;
-  }
-  .modal-close:hover { background: var(--sand); }
-  .form-row { margin-bottom: 1rem; }
-  .form-label { font-size: 0.75rem; color: var(--ink-light); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 5px; display: block; font-weight: 500; }
-  .form-input, .form-select {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid var(--sand-dark);
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-family: 'DM Sans', sans-serif;
-    color: var(--ink);
-    background: var(--sand);
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  .form-input:focus, .form-select:focus { border-color: var(--ink-light); background: white; }
-  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.2rem; }
-  .btn-cancel {
-    padding: 8px 18px;
-    border: 1px solid var(--sand-dark);
-    background: transparent;
-    color: var(--ink-mid);
-    border-radius: 8px;
-    font-size: 0.82rem;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-  }
-  .btn-save {
-    padding: 8px 18px;
-    border: none;
-    background: var(--ink);
-    color: var(--sand);
-    border-radius: 8px;
-    font-size: 0.82rem;
-    cursor: pointer;
-    font-weight: 500;
-    font-family: 'DM Sans', sans-serif;
-    transition: background 0.2s;
-  }
-  .btn-save:hover { background: var(--terracotta); }
+/* Unflagged dimming */
+.place-card.unflagged { opacity: 0.65; }
+.place-card.unflagged:hover { opacity: 1; }
 
-  /* EMPTY STATE */
-  .empty-state {
-    text-align: center;
-    padding: 2rem 1rem;
-    color: var(--ink-light);
-    font-size: 0.85rem;
-    border: 1px dashed var(--sand-dark);
-    border-radius: var(--radius);
-    background: white;
-  }
-  .empty-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+/* Empty state */
+.empty { text-align: center; padding: 40px 20px; color: var(--gray-400); font-size: 0.8rem; }
+.empty-icon { font-size: 2rem; margin-bottom: 8px; }
+.empty-title { font-weight: 600; color: var(--gray-500); margin-bottom: 4px; font-size: 0.85rem; }
 
-  /* PACKING / SUMMARY SIDEBAR */
-  .two-col { display: grid; grid-template-columns: 1fr 260px; gap: 1.5rem; align-items: start; }
-  .summary-box {
-    background: white;
-    border: 1px solid var(--sand-dark);
-    border-radius: var(--radius);
-    overflow: hidden;
-    position: sticky;
-    top: 80px;
-  }
-  .summary-box-header {
-    background: var(--ink);
-    padding: 0.9rem 1.1rem;
-    font-family: 'Playfair Display', serif;
-    font-size: 0.95rem;
-    color: var(--sand);
-  }
-  .summary-rows { padding: 0.6rem 0; }
-  .summary-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 0.6rem 1.1rem;
-    border-bottom: 1px solid var(--sand);
-    font-size: 0.8rem;
-    color: var(--ink-mid);
-  }
-  .summary-row:last-child { border-bottom: none; }
-  .summary-dot {
-    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-  }
-  .summary-row-name { flex: 1; }
-  .summary-row-badge { font-size: 0.68rem; }
+/* Bottom add strip */
+.add-strip { padding: 8px 10px; border-top: 1px solid var(--gray-100); display: flex; gap: 5px; flex-shrink: 0; }
+.add-strip-btn {
+  flex: 1; padding: 7px 6px; border-radius: var(--radius-sm);
+  border: 1.5px dashed var(--gray-200); background: transparent;
+  font-size: 0.7rem; font-weight: 500; color: var(--gray-400);
+  cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 3px;
+}
+.add-strip-btn:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-light); }
 
-  /* CHECKLIST */
-  .checklist { padding: 0.5rem 0; }
-  .check-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 0.55rem 1.1rem;
-    border-bottom: 1px solid var(--sand);
-    cursor: pointer;
-  }
-  .check-item:last-child { border-bottom: none; }
-  .check-item:hover { background: var(--sand); }
-  .check-box {
-    width: 16px; height: 16px;
-    border-radius: 4px;
-    border: 1.5px solid var(--sand-dark);
-    flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.6rem;
-    color: white;
-    transition: all 0.15s;
-  }
-  .check-item.checked .check-box { background: var(--forest); border-color: var(--forest); }
-  .check-item.checked .check-label { color: var(--ink-light); text-decoration: line-through; }
-  .check-label { font-size: 0.8rem; color: var(--ink-mid); }
+/* ─── MAP ─────────────────────────────────────────────── */
+.map-wrap { flex: 1; position: relative; overflow: hidden; }
+#trip-map { width: 100%; height: 100%; }
 
-  /* MAP */
-  .map-section { margin-bottom: 2.5rem; }
-  .map-wrap {
-    border-radius: var(--radius);
-    overflow: hidden;
-    border: 1px solid var(--sand-dark);
-    position: relative;
-  }
-  #trip-map { height: 440px; width: 100%; }
-  .map-filter-bar {
-    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;
-  }
-  .map-filter {
-    padding: 5px 14px;
-    border-radius: 20px;
-    border: 1.5px solid transparent;
-    font-size: 0.76rem;
-    font-weight: 500;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    transition: all 0.15s;
-    background: white;
-  }
-  .map-filter.all { border-color: var(--ink); color: var(--ink); }
-  .map-filter.all.active { background: var(--ink); color: var(--sand); }
-  .map-filter.restaurant { border-color: var(--terracotta); color: var(--terracotta); }
-  .map-filter.restaurant.active { background: var(--terracotta); color: white; }
-  .map-filter.poi { border-color: var(--forest); color: var(--forest); }
-  .map-filter.poi.active { background: var(--forest); color: white; }
-  .map-legend {
-    display: flex; gap: 16px; margin-left: auto; align-items: center;
-  }
-  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; color: var(--ink-light); }
-  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.map-chips {
+  position: absolute; top: 12px; left: 12px; z-index: 20;
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.chip {
+  padding: 5px 12px; border-radius: 20px; background: var(--white);
+  border: 1px solid var(--gray-200); font-size: 0.72rem; font-weight: 500;
+  color: var(--gray-600); cursor: pointer; font-family: 'Inter', sans-serif;
+  box-shadow: var(--shadow-sm); transition: all 0.15s;
+  display: flex; align-items: center; gap: 4px;
+}
+.chip:hover { border-color: var(--gray-300); }
+.chip.c-all { }
+.chip.c-all.active        { background: var(--gray-800); border-color: var(--gray-800); color: white; }
+.chip.c-hotel.active      { background: var(--blue);     border-color: var(--blue);     color: white; }
+.chip.c-restaurant.active { background: var(--orange);   border-color: var(--orange);   color: white; }
+.chip.c-poi.active        { background: var(--purple);   border-color: var(--purple);   color: white; }
 
-  /* Leaflet popup overrides */
-  .leaflet-popup-content-wrapper {
-    border-radius: 12px !important;
-    box-shadow: 0 6px 28px rgba(26,24,20,0.18) !important;
-    border: 1px solid #e8e0d0 !important;
-    padding: 0 !important;
-    overflow: hidden;
-    font-family: 'DM Sans', sans-serif !important;
-  }
-  .leaflet-popup-content { margin: 0 !important; font-family: 'DM Sans', sans-serif !important; }
-  .leaflet-popup-tip { background: white !important; }
-  .leaflet-popup-close-button {
-    color: #7a7265 !important;
-    font-size: 18px !important;
-    padding: 6px 10px !important;
-    top: 2px !important; right: 2px !important;
-  }
-  .leaflet-popup-close-button:hover { color: #1a1814 !important; }
-  .map-popup { padding: 14px 16px 12px; min-width: 200px; }
-  .map-popup-type { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 4px; }
-  .popup-restaurant { color: #c4623a; }
-  .popup-poi { color: #2d5016; }
-  .map-popup-name { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; color: #1a1814; margin-bottom: 7px; line-height: 1.3; }
-  .map-popup-row { font-size: 0.75rem; color: #7a7265; margin-bottom: 3px; display: flex; align-items: center; gap: 5px; }
-  .map-popup-divider { height: 1px; background: #e8e0d0; margin: 8px 0; }
-  .map-popup-note { font-size: 0.72rem; color: #7a7265; font-style: italic; line-height: 1.5; }
-  .map-popup-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
-  .map-popup-badge { font-size: 0.65rem; font-weight: 500; padding: 2px 8px; border-radius: 20px; }
-  .badge-confirmed-sm { background: #e8f5e2; color: #2d6b1a; border: 1px solid #c0dfaa; }
-  .badge-pending-sm   { background: #fdf0d5; color: #8a5e10; border: 1px solid #f2cc7a; }
-  .badge-cancelled-sm { background: #fde8e8; color: #8a2020; border: 1px solid #f5b8b8; }
-  .badge-must-sm      { background: #f0e4dc; color: #8a3820; border: 1px solid #e5b09a; }
-  .badge-optional-sm  { background: #e8e0d0; color: #7a7265; border: 1px solid #cfc9bc; }
-  .map-popup-gmaps {
-    display: inline-flex; align-items: center; gap: 4px;
-    margin-top: 8px; font-size: 0.72rem; color: #1b4a6b;
-    text-decoration: none; font-weight: 500;
-  }
-  .map-popup-gmaps:hover { text-decoration: underline; }
+/* Legend */
+.map-legend {
+  position: absolute; bottom: 28px; left: 12px; z-index: 20;
+  background: rgba(255,255,255,0.94); border: 1px solid var(--gray-200);
+  border-radius: var(--radius); padding: 8px 12px;
+  box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 5px;
+}
+.legend-row { display: flex; align-items: center; gap: 6px; font-size: 0.68rem; color: var(--gray-500); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.legend-hint { font-size: 0.62rem; color: var(--gray-400); margin-top: 3px; border-top: 1px solid var(--gray-100); padding-top: 4px; }
 
-  @media (max-width: 680px) {
-    .two-col { grid-template-columns: 1fr; }
-    .summary-box { position: static; }
-    .hero { padding: 2rem 1.2rem 1.5rem; }
-    .main { padding: 1.2rem; }
-    .trip-stats { gap: 1.2rem; }
-    .form-row-2 { grid-template-columns: 1fr; }
-    #trip-map { height: 300px; }
-  }
+/* ─── POPUP ───────────────────────────────────────────── */
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important;
+  border: 1px solid var(--gray-200) !important;
+  padding: 0 !important; overflow: hidden;
+  font-family: 'Inter', sans-serif !important;
+}
+.leaflet-popup-content { margin: 0 !important; }
+.leaflet-popup-tip { background: white !important; }
+.leaflet-popup-close-button { top: 4px !important; right: 6px !important; color: var(--gray-400) !important; font-size: 16px !important; }
+.popup-body { padding: 13px 15px 11px; min-width: 200px; max-width: 250px; font-family: 'Inter', sans-serif; }
+.popup-kind { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px; }
+.pk-hotel { color: var(--blue); }
+.pk-restaurant { color: var(--orange); }
+.pk-poi { color: var(--purple); }
+.popup-name { font-size: 0.9rem; font-weight: 700; color: var(--gray-800); line-height: 1.3; margin-bottom: 5px; }
+.popup-row { font-size: 0.71rem; color: var(--gray-500); margin-bottom: 2px; display: flex; align-items: center; gap: 4px; }
+.popup-hr { height: 1px; background: var(--gray-100); margin: 7px 0; }
+.popup-note { font-size: 0.68rem; color: var(--gray-400); line-height: 1.5; }
+.popup-badges { display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
+.popup-badge { font-size: 0.6rem; font-weight: 600; padding: 2px 6px; border-radius: 10px; }
+.ppb-confirmed { background: var(--green-light); color: #16a34a; }
+.ppb-pending   { background: #fefce8; color: #a16207; }
+.ppb-must      { background: var(--orange-light); color: var(--orange); }
+.ppb-optional  { background: var(--gray-100); color: var(--gray-500); }
+.popup-gmaps {
+  display: inline-flex; align-items: center; gap: 3px; margin-top: 7px;
+  font-size: 0.7rem; font-weight: 500; color: var(--blue); text-decoration: none;
+}
+.popup-gmaps:hover { text-decoration: underline; }
+
+/* ─── MODAL ───────────────────────────────────────────── */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(2px);
+  z-index: 500; display: flex; align-items: center; justify-content: center; padding: 16px;
+  opacity: 0; pointer-events: none; transition: opacity 0.18s;
+}
+.overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--white); border-radius: var(--radius-lg); width: 100%; max-width: 450px;
+  box-shadow: var(--shadow-lg); transform: translateY(14px); transition: transform 0.18s; overflow: hidden;
+}
+.overlay.open .modal { transform: translateY(0); }
+.modal-hd {
+  padding: 14px 18px 12px; border-bottom: 1px solid var(--gray-100);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-hd-title { font-size: 0.95rem; font-weight: 700; color: var(--gray-800); }
+.modal-x {
+  width: 26px; height: 26px; border-radius: var(--radius-sm); border: 1px solid var(--gray-200);
+  background: transparent; cursor: pointer; color: var(--gray-400); display: flex; align-items: center; justify-content: center; font-size: 0.9rem;
+}
+.modal-x:hover { background: var(--gray-100); }
+.modal-bd { padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; max-height: 70vh; overflow-y: auto; }
+.modal-ft { padding: 10px 18px 14px; border-top: 1px solid var(--gray-100); display: flex; justify-content: flex-end; gap: 7px; }
+.frow { display: flex; flex-direction: column; gap: 3px; }
+.frow2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.flabel { font-size: 0.68rem; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; }
+.finput, .fselect {
+  padding: 7px 10px; border-radius: var(--radius-sm); border: 1px solid var(--gray-200);
+  background: var(--gray-50); font-size: 0.8rem; font-family: 'Inter', sans-serif; color: var(--gray-800);
+  outline: none; transition: all 0.15s;
+}
+.finput:focus, .fselect:focus { border-color: var(--orange); background: white; box-shadow: 0 0 0 3px rgba(249,115,22,0.1); }
+.btn-cancel2 {
+  padding: 7px 16px; border-radius: var(--radius-sm); border: 1px solid var(--gray-200);
+  background: transparent; font-size: 0.78rem; font-weight: 500; color: var(--gray-600);
+  cursor: pointer; font-family: 'Inter', sans-serif;
+}
+.btn-save2 {
+  padding: 7px 18px; border-radius: var(--radius-sm); border: none;
+  background: var(--orange); font-size: 0.78rem; font-weight: 600; color: white;
+  cursor: pointer; font-family: 'Inter', sans-serif; transition: background 0.15s;
+}
+.btn-save2:hover { background: var(--orange-dark); }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="logo">wander<span>lust</span></div>
-  <div class="header-actions">
-    <button class="btn-ghost" onclick="window.print()">🖨 Print</button>
-    <button class="btn-primary" onclick="showModal('hotel')">+ Add Item</button>
+<!-- TOP BAR -->
+<header class="topbar">
+  <span class="logo">wanderlog</span>
+  <div class="topbar-sep"></div>
+  <div class="trip-info">
+    <div class="trip-name">🇵🇹 Summer in Lisbon</div>
+    <div class="trip-sub">Jun 14 – Jun 21, 2025 · 7 nights · Portugal</div>
+  </div>
+  <nav class="topbar-tabs">
+    <button class="topbar-tab active">Itinerary</button>
+    <button class="topbar-tab">Notes</button>
+    <button class="topbar-tab">Budget</button>
+  </nav>
+  <div class="topbar-right">
+    <button class="btn-sm" onclick="showModal('hotel')">🏨 Hotel</button>
+    <button class="btn-sm" onclick="showModal('restaurant')">🍽 Restaurant</button>
+    <button class="btn-primary" onclick="showModal('poi')">＋ Add place</button>
   </div>
 </header>
 
-<div class="hero">
-  <div class="hero-inner">
-    <div class="trip-meta">
-      <span class="trip-tag">🌍 Europe</span>
-      <span class="trip-date" id="trip-date-range">Jun 14 – Jun 21, 2025 · 7 nights</span>
-    </div>
-    <h1 id="trip-title">Summer in <em>Lisbon</em></h1>
-    <p class="hero-sub" id="trip-sub">Portugal's sun-drenched capital — trams, tiles & pastéis</p>
-    <div class="trip-stats">
-      <div class="stat">
-        <span class="stat-value" id="stat-hotels">2</span>
-        <span class="stat-label">Hotels</span>
-      </div>
-      <div class="stat-sep"></div>
-      <div class="stat">
-        <span class="stat-value" id="stat-restaurants">5</span>
-        <span class="stat-label">Restaurants</span>
-      </div>
-      <div class="stat-sep"></div>
-      <div class="stat">
-        <span class="stat-value" id="stat-pois">7</span>
-        <span class="stat-label">Places</span>
-      </div>
-      <div class="stat-sep"></div>
-      <div class="stat">
-        <span class="stat-value" id="stat-confirmed">10</span>
-        <span class="stat-label">Confirmed</span>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- BODY -->
+<div class="app-body">
 
-<div class="main">
-  <div class="two-col">
-    <div class="left-col">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <!-- Day selector -->
+    <div class="day-strip" id="day-strip"></div>
 
-      <!-- MAP -->
-      <div class="section map-section">
-        <div class="section-header">
-          <div class="section-title-group">
-            <div class="section-icon" style="background:#e8f0e8; font-size:1rem">🗺</div>
-            <span class="section-title">Trip Map</span>
-          </div>
-        </div>
-        <div class="map-filter-bar">
-          <button class="map-filter all active" onclick="setMapFilter('all', this)">All</button>
-          <button class="map-filter restaurant" onclick="setMapFilter('restaurant', this)">🍽 Restaurants</button>
-          <button class="map-filter poi" onclick="setMapFilter('poi', this)">📍 Places</button>
-          <div class="map-legend">
-            <div class="legend-item"><div class="legend-dot" style="background:#c4623a"></div>Restaurant</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#2d5016"></div>Place</div>
-          </div>
-        </div>
-        <div class="map-wrap">
-          <div id="trip-map"></div>
-        </div>
-      </div>
-
-      <!-- HOTELS -->
-      <div class="section">
-        <div class="section-header">
-          <div class="section-title-group">
-            <div class="section-icon icon-hotel">🏨</div>
-            <span class="section-title">Hotel Reservations</span>
-            <span class="section-count" id="hotel-count">0</span>
-          </div>
-          <button class="btn-add" onclick="showModal('hotel')">+ Add Hotel</button>
-        </div>
-        <div class="cards-grid" id="hotels-grid"></div>
-      </div>
-
-      <!-- RESTAURANTS -->
-      <div class="section">
-        <div class="section-header">
-          <div class="section-title-group">
-            <div class="section-icon icon-restaurant">🍽</div>
-            <span class="section-title">Restaurant Reservations</span>
-            <span class="section-count" id="restaurant-count">0</span>
-          </div>
-          <button class="btn-add" onclick="showModal('restaurant')">+ Add Restaurant</button>
-        </div>
-        <div class="cards-grid" id="restaurants-grid"></div>
-      </div>
-
-      <!-- POINTS OF INTEREST -->
-      <div class="section">
-        <div class="section-header">
-          <div class="section-title-group">
-            <div class="section-icon icon-poi">📍</div>
-            <span class="section-title">Points of Interest</span>
-            <span class="section-count" id="poi-count">0</span>
-          </div>
-          <button class="btn-add" onclick="showModal('poi')">+ Add Place</button>
-        </div>
-        <div class="cards-grid" id="pois-grid"></div>
-      </div>
-
-      <!-- DAILY ITINERARY -->
-      <div class="section">
-        <div class="section-header">
-          <div class="section-title-group">
-            <div class="section-icon" style="background:#f5f0e8; font-size:1rem">🗓</div>
-            <span class="section-title">Daily Itinerary</span>
-          </div>
-        </div>
-        <div class="day-tabs" id="day-tabs"></div>
-        <div class="timeline" id="timeline"></div>
-      </div>
-
-      <!-- TRIP NOTES -->
-      <div class="section">
-        <div class="section-header">
-          <div class="section-title-group">
-            <div class="section-icon" style="background:#f0f0e8; font-size:1rem">📝</div>
-            <span class="section-title">Trip Notes</span>
-          </div>
-        </div>
-        <div class="notes-area">
-          <textarea rows="5" id="trip-notes" placeholder="Jot down visa info, emergency contacts, packing reminders, or anything else…">Visa: EU citizen, no visa needed.
-Airport: Humberto Delgado (LIS) · Terminal 1
-Currency: Euro (€) · Bring ~€200 cash for taxis & markets
-Power adapter: Type F (same as Spain)
-Emergency: 112 · Embassy: +351 21 727 3300</textarea>
-        </div>
-      </div>
-
+    <!-- Type tabs -->
+    <div class="type-tabs">
+      <button class="type-tab active" onclick="setTab('all',this)">All <span class="tab-badge" id="tb-all">0</span></button>
+      <button class="type-tab" onclick="setTab('hotel',this)">🏨 Hotels <span class="tab-badge" id="tb-hotel">0</span></button>
+      <button class="type-tab" onclick="setTab('restaurant',this)">🍽 Dining <span class="tab-badge" id="tb-restaurant">0</span></button>
+      <button class="type-tab" onclick="setTab('poi',this)">📍 Places <span class="tab-badge" id="tb-poi">0</span></button>
     </div>
 
-    <!-- SIDEBAR -->
-    <div class="right-col">
-      <div class="summary-box" style="margin-bottom:1rem">
-        <div class="summary-box-header">Quick Summary</div>
-        <div class="summary-rows" id="summary-rows">
-          <div class="summary-row" style="color:var(--ink-light);font-style:italic;font-size:0.78rem;">Add items to see summary</div>
-        </div>
-      </div>
+    <!-- Cards -->
+    <div class="cards-area" id="cards-area"></div>
 
-      <div class="summary-box">
-        <div class="summary-box-header">Packing Checklist</div>
-        <div class="checklist" id="checklist">
-          <div class="check-item" onclick="toggleCheck(this)">
-            <div class="check-box">✓</div>
-            <span class="check-label">Passport & copies</span>
-          </div>
-          <div class="check-item" onclick="toggleCheck(this)">
-            <div class="check-box">✓</div>
-            <span class="check-label">Travel insurance</span>
-          </div>
-          <div class="check-item checked" onclick="toggleCheck(this)">
-            <div class="check-box">✓</div>
-            <span class="check-label">Hotel confirmations printed</span>
-          </div>
-          <div class="check-item" onclick="toggleCheck(this)">
-            <div class="check-box">✓</div>
-            <span class="check-label">Power adapter (Type F)</span>
-          </div>
-          <div class="check-item" onclick="toggleCheck(this)">
-            <div class="check-box">✓</div>
-            <span class="check-label">Euros (cash)</span>
-          </div>
-          <div class="check-item checked" onclick="toggleCheck(this)">
-            <div class="check-box">✓</div>
-            <span class="check-label">Download offline maps</span>
-          </div>
-          <div class="check-item" onclick="toggleCheck(this)">
-            <div class="check-box">✓</div>
-            <span class="check-label">Sunscreen & hat</span>
-          </div>
-          <div class="check-item" onclick="toggleCheck(this)">
-            <div class="check-box">✓</div>
-            <span class="check-label">Comfortable walking shoes</span>
-          </div>
-        </div>
-      </div>
+    <!-- Add strip -->
+    <div class="add-strip">
+      <button class="add-strip-btn" onclick="showModal('hotel')">🏨 Hotel</button>
+      <button class="add-strip-btn" onclick="showModal('restaurant')">🍽 Restaurant</button>
+      <button class="add-strip-btn" onclick="showModal('poi')">📍 Place</button>
+    </div>
+  </aside>
+
+  <!-- MAP -->
+  <div class="map-wrap">
+    <div id="trip-map"></div>
+
+    <!-- Filter chips -->
+    <div class="map-chips">
+      <div class="chip c-all active" onclick="setMapFilter('all',this)">All</div>
+      <div class="chip c-hotel"      onclick="setMapFilter('hotel',this)">🏨 Hotels</div>
+      <div class="chip c-restaurant" onclick="setMapFilter('restaurant',this)">🍽 Dining</div>
+      <div class="chip c-poi"        onclick="setMapFilter('poi',this)">📍 Places</div>
+    </div>
+
+    <!-- Legend -->
+    <div class="map-legend">
+      <div class="legend-row"><div class="legend-dot" style="background:var(--blue)"></div> Hotel</div>
+      <div class="legend-row"><div class="legend-dot" style="background:var(--orange)"></div> Restaurant</div>
+      <div class="legend-row"><div class="legend-dot" style="background:var(--purple)"></div> Point of Interest</div>
+      <div class="legend-hint">🚩 Flagged = shown on map<br>Unflagged = dimmed pin</div>
     </div>
   </div>
 </div>
 
-<!-- ADD ITEM MODAL -->
-<div class="modal-overlay" id="modal-overlay" onclick="closeModalOnBg(event)">
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="closeBg(event)">
   <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title" id="modal-title">Add Hotel</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-hd">
+      <span class="modal-hd-title" id="modal-title">Add place</span>
+      <button class="modal-x" onclick="closeModal()">✕</button>
     </div>
-    <div id="modal-body"></div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-save" onclick="saveItem()">Save</button>
+    <div class="modal-bd" id="modal-bd"></div>
+    <div class="modal-ft">
+      <button class="btn-cancel2" onclick="closeModal()">Cancel</button>
+      <button class="btn-save2"   onclick="saveItem()">Save</button>
     </div>
   </div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-let currentModalType = '';
+// ─── STATE ────────────────────────────────────────────────────────────
+const DAYS = ['Jun 14','Jun 15','Jun 16','Jun 17','Jun 18','Jun 19','Jun 20'];
 
 const state = {
   hotels: [
-    { id: 1, name: 'Bairro Alto Hotel', dates: 'Jun 14–18', nights: '4 nights', stars: 5, status: 'confirmed', flagged: true, note: 'Rooftop bar · Chiado district' },
-    { id: 2, name: 'LX Boutique Hotel', dates: 'Jun 18–21', nights: '3 nights', stars: 4, status: 'confirmed', flagged: true, note: 'River views · Cais do Sodré' },
+    { id:1,  type:'hotel',      name:'Bairro Alto Hotel',    dates:'Jun 14–18', nights:'4 nights', stars:5, status:'confirmed', flagged:true,  note:'Rooftop bar · Chiado',          lat:38.7105,  lng:-9.1426,  day:1 },
+    { id:2,  type:'hotel',      name:'LX Boutique Hotel',    dates:'Jun 18–21', nights:'3 nights', stars:4, status:'confirmed', flagged:true,  note:'River views · Cais do Sodré',    lat:38.7058,  lng:-9.1461,  day:5 },
   ],
   restaurants: [
-    { id: 1, name: 'Belcanto', date: 'Jun 15', time: '8:00 PM', cuisine: 'Contemporary Portuguese', status: 'confirmed', flagged: true, priority: 'must', note: '2 Michelin stars · Book months ahead' },
-    { id: 2, name: 'Time Out Market', date: 'Jun 14', time: '1:00 PM', cuisine: 'Food Hall', status: 'confirmed', flagged: true, priority: 'must', note: 'Riverside · Great for first day' },
-    { id: 3, name: 'Tasca do Chico', date: 'Jun 16', time: '9:00 PM', cuisine: 'Fado & Portuguese', status: 'pending', flagged: false, priority: 'must', note: 'Traditional fado house · Tiny & intimate' },
-    { id: 4, name: 'Cervejaria Ramiro', date: 'Jun 17', time: '7:30 PM', cuisine: 'Seafood', status: 'confirmed', flagged: true, priority: 'optional', note: 'Famous prawns & crab' },
-    { id: 5, name: 'Pastéis de Belém', date: 'Jun 19', time: '10:00 AM', cuisine: 'Café / Pastries', status: 'confirmed', flagged: true, priority: 'must', note: 'Original pastel de nata since 1837' },
+    { id:11, type:'restaurant', name:'Time Out Market',      date:'Jun 14', time:'1:00 PM',  cuisine:'Food Hall',               status:'confirmed', flagged:true,  priority:'must',     note:'Riverside · Perfect first night',        lat:38.7063,  lng:-9.1453,  day:1 },
+    { id:12, type:'restaurant', name:'Belcanto',             date:'Jun 15', time:'8:00 PM',  cuisine:'Contemporary Portuguese', status:'confirmed', flagged:true,  priority:'must',     note:'2 Michelin stars · Book months ahead',   lat:38.7101,  lng:-9.1407,  day:2 },
+    { id:13, type:'restaurant', name:'Tasca do Chico',       date:'Jun 16', time:'9:00 PM',  cuisine:'Fado & Portuguese',       status:'pending',   flagged:false, priority:'must',     note:'Traditional fado house · Tiny & intimate',lat:38.7134,  lng:-9.1369,  day:3 },
+    { id:14, type:'restaurant', name:'Cervejaria Ramiro',    date:'Jun 17', time:'7:30 PM',  cuisine:'Seafood',                 status:'confirmed', flagged:true,  priority:'optional', note:'Famous prawns & crab',                   lat:38.7215,  lng:-9.1347,  day:4 },
+    { id:15, type:'restaurant', name:'Pastéis de Belém',     date:'Jun 19', time:'10:00 AM', cuisine:'Café / Pastries',         status:'confirmed', flagged:true,  priority:'must',     note:'Original pastel de nata since 1837',     lat:38.6973,  lng:-9.2038,  day:6 },
   ],
   pois: [
-    { id: 1, name: 'Jerónimos Monastery', date: 'Jun 19', time: '9:00 AM', category: 'UNESCO Site', flagged: true, priority: 'must', note: 'Buy tickets online — skip queues' },
-    { id: 2, name: 'LX Factory', date: 'Jun 15', time: '4:00 PM', category: 'Market / Culture', flagged: true, priority: 'optional', note: 'Sunday market is best' },
-    { id: 3, name: 'Alfama Tram 28', date: 'Jun 14', time: '3:00 PM', category: 'Experience', flagged: true, priority: 'must', note: 'Board at Martim Moniz to beat crowds' },
-    { id: 4, name: 'Castelo de São Jorge', date: 'Jun 16', time: '10:00 AM', category: 'Historic Site', flagged: false, priority: 'optional', note: 'Panoramic views of Lisbon' },
-    { id: 5, name: 'MAAT Museum', date: 'Jun 18', time: '2:00 PM', category: 'Art Museum', flagged: true, priority: 'optional', note: 'Contemporary art · Riverside' },
-    { id: 6, name: 'Sintra Day Trip', date: 'Jun 20', time: '8:30 AM', category: 'Day Trip', flagged: true, priority: 'must', note: 'Palácio Nacional + Pena Palace · Full day' },
-    { id: 7, name: 'Miradouro da Graça', date: 'Jun 17', time: '6:30 PM', category: 'Viewpoint', flagged: false, priority: 'optional', note: 'Best sunset viewpoint in Lisbon' },
+    { id:21, type:'poi', name:'Alfama Tram 28',              date:'Jun 14', time:'3:00 PM',  category:'Experience',       flagged:true,  priority:'must',     note:'Board at Martim Moniz',           lat:38.7141,  lng:-9.1331,  day:1 },
+    { id:22, type:'poi', name:'LX Factory',                  date:'Jun 15', time:'4:00 PM',  category:'Market / Culture', flagged:true,  priority:'optional', note:'Sunday market is best',           lat:38.7033,  lng:-9.1769,  day:2 },
+    { id:23, type:'poi', name:'Castelo de São Jorge',        date:'Jun 16', time:'10:00 AM', category:'Historic Site',    flagged:false, priority:'optional', note:'Panoramic views of Lisbon',       lat:38.7139,  lng:-9.1355,  day:3 },
+    { id:24, type:'poi', name:'Miradouro da Graça',          date:'Jun 17', time:'6:30 PM',  category:'Viewpoint',        flagged:false, priority:'optional', note:'Best sunset viewpoint',           lat:38.7156,  lng:-9.1317,  day:4 },
+    { id:25, type:'poi', name:'MAAT Museum',                 date:'Jun 18', time:'2:00 PM',  category:'Art Museum',       flagged:true,  priority:'optional', note:'Contemporary art · Riverside',    lat:38.7003,  lng:-9.1884,  day:5 },
+    { id:26, type:'poi', name:'Jerónimos Monastery',         date:'Jun 19', time:'9:00 AM',  category:'UNESCO Site',      flagged:true,  priority:'must',     note:'Buy tickets online',             lat:38.6978,  lng:-9.2067,  day:6 },
+    { id:27, type:'poi', name:'Sintra Day Trip',             date:'Jun 20', time:'8:30 AM',  category:'Day Trip',         flagged:true,  priority:'must',     note:'Pena Palace · Full day',          lat:38.7975,  lng:-9.3904,  day:7 },
   ],
 };
 
-const days = [
-  { label: 'Day 1', date: 'Jun 14', items: [
-    { time: '3:00 PM', name: 'Tram 28 through Alfama', type: 'poi', sub: 'Experience · Alfama' },
-    { time: '4:30 PM', name: 'Check in — Bairro Alto Hotel', type: 'hotel', sub: 'Hotel · Chiado' },
-    { time: '7:00 PM', name: 'Time Out Market', type: 'restaurant', sub: 'Food Hall · Cais do Sodré' },
-  ]},
-  { label: 'Day 2', date: 'Jun 15', items: [
-    { time: '10:00 AM', name: 'LX Factory', type: 'poi', sub: 'Market / Culture · Alcântara' },
-    { time: '8:00 PM', name: 'Belcanto', type: 'restaurant', sub: '2 Michelin stars · Chiado' },
-  ]},
-  { label: 'Day 3', date: 'Jun 16', items: [
-    { time: '10:00 AM', name: 'Castelo de São Jorge', type: 'poi', sub: 'Historic Site · Alfama' },
-    { time: '9:00 PM', name: 'Tasca do Chico', type: 'restaurant', sub: 'Fado dinner · Alfama' },
-  ]},
-  { label: 'Day 4', date: 'Jun 17', items: [
-    { time: '7:30 PM', name: 'Cervejaria Ramiro', type: 'restaurant', sub: 'Seafood · Intendente' },
-    { time: '6:30 PM', name: 'Miradouro da Graça', type: 'poi', sub: 'Viewpoint · Graça' },
-  ]},
-  { label: 'Day 5', date: 'Jun 18', items: [
-    { time: '2:00 PM', name: 'MAAT Museum', type: 'poi', sub: 'Contemporary Art · Belém' },
-    { time: '5:00 PM', name: 'Check in — LX Boutique Hotel', type: 'hotel', sub: 'River views · Cais do Sodré' },
-  ]},
-  { label: 'Day 6', date: 'Jun 19', items: [
-    { time: '9:00 AM', name: 'Jerónimos Monastery', type: 'poi', sub: 'UNESCO Site · Belém' },
-    { time: '10:00 AM', name: 'Pastéis de Belém', type: 'restaurant', sub: 'Café · Belém' },
-  ]},
-  { label: 'Day 7', date: 'Jun 20', items: [
-    { time: '8:30 AM', name: 'Sintra Day Trip', type: 'poi', sub: 'Day Trip · Sintra (40 min train)' },
-  ]},
-];
-
+// ─── UI STATE ─────────────────────────────────────────────────────────
 let activeDay = 0;
+let activeTab = 'all';
+let activeMapFilter = 'all';
+let selectedId = null;
 
-function starsHtml(n) {
-  return '★'.repeat(n) + '☆'.repeat(5 - n);
+// ─── HELPERS ──────────────────────────────────────────────────────────
+const allItems = () => [...state.hotels, ...state.restaurants, ...state.pois];
+const byId = id => allItems().find(i => i.id === id);
+
+const typeColor = t => t === 'hotel' ? '#3b82f6' : t === 'restaurant' ? '#f97316' : '#8b5cf6';
+const nClass    = t => t === 'hotel' ? 'n-hotel' : t === 'restaurant' ? 'n-restaurant' : 'n-poi';
+const kClass    = t => t === 'hotel' ? 'k-hotel' : t === 'restaurant' ? 'k-restaurant' : 'k-poi';
+const pkClass   = t => t === 'hotel' ? 'pk-hotel': t === 'restaurant' ? 'pk-restaurant': 'pk-poi';
+const typeLabel = t => t === 'hotel' ? 'Hotel' : t === 'restaurant' ? 'Restaurant' : 'Point of Interest';
+const typeEmoji = t => t === 'hotel' ? '🏨' : t === 'restaurant' ? '🍽' : '📍';
+const stars     = n => '★'.repeat(n) + '☆'.repeat(5-n);
+
+function buildNumMap() {
+  const m = {}; let n = 1;
+  allItems().forEach(i => { m[i.id] = n++; });
+  return m;
 }
 
-function renderHotels() {
-  const grid = document.getElementById('hotels-grid');
-  document.getElementById('hotel-count').textContent = state.hotels.length;
-  if (!state.hotels.length) {
-    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🏨</div>No hotels added yet</div>`;
+// ─── DAY STRIP ────────────────────────────────────────────────────────
+function renderDayStrip() {
+  const el = document.getElementById('day-strip');
+  const buttons = [{ label:'All', d:0 }, ...DAYS.map((dt,i) => ({ label:`Day ${i+1}`, sub:dt, d:i+1 }))];
+  el.innerHTML = buttons.map(b => `
+    <button class="day-btn ${b.d===0?'all-btn':''} ${activeDay===b.d?'active':''}" onclick="setDay(${b.d})">
+      ${b.label}${b.sub ? `<span style="font-weight:400;opacity:.6"> · ${b.sub}</span>` : ''}
+    </button>`).join('');
+}
+const setDay = d => { activeDay = d; renderAll(); };
+
+// ─── CARDS ────────────────────────────────────────────────────────────
+function filteredItems() {
+  let items = allItems();
+  if (activeDay > 0) items = items.filter(i => i.day === activeDay);
+  if (activeTab !== 'all') items = items.filter(i => i.type === activeTab);
+  return items;
+}
+
+function renderCards() {
+  // Update badge counts
+  document.getElementById('tb-all').textContent        = allItems().length;
+  document.getElementById('tb-hotel').textContent      = state.hotels.length;
+  document.getElementById('tb-restaurant').textContent = state.restaurants.length;
+  document.getElementById('tb-poi').textContent        = state.pois.length;
+
+  const items = filteredItems();
+  const numMap = buildNumMap();
+  const area = document.getElementById('cards-area');
+
+  if (!items.length) {
+    area.innerHTML = `<div class="empty"><div class="empty-icon">🗺️</div><div class="empty-title">Nothing here yet</div>Use the buttons below to add hotels, restaurants, and places.</div>`;
     return;
   }
-  grid.innerHTML = state.hotels.map(h => `
-    <div class="card flagged hotel">
-      <div class="card-body">
-        <div class="card-top">
-          <div class="card-name">${h.name}</div>
-          <div class="card-actions">
-            <button class="action-btn flag-btn hotel ${h.flagged ? 'active' : ''}" title="Flag" onclick="toggleFlag('hotel',${h.id})">🚩</button>
-            <button class="action-btn" title="Delete" onclick="deleteItem('hotel',${h.id})">✕</button>
-          </div>
-        </div>
-        <div class="card-meta">
-          <div class="card-detail"><span class="card-detail-icon">📅</span> ${h.dates} · ${h.nights}</div>
-          <div class="card-detail"><span class="card-detail-icon"></span><span class="stars">${starsHtml(h.stars)}</span></div>
-          ${h.note ? `<div class="card-detail" style="color:var(--ink-light);font-style:italic;">${h.note}</div>` : ''}
-        </div>
-        <div class="card-badges">
-          <span class="badge badge-${h.status}">${h.status.charAt(0).toUpperCase() + h.status.slice(1)}</span>
-          ${h.flagged ? '<span class="badge badge-booked">Flagged</span>' : ''}
-        </div>
-      </div>
-    </div>
-  `).join('');
-}
 
-function renderRestaurants() {
-  const grid = document.getElementById('restaurants-grid');
-  document.getElementById('restaurant-count').textContent = state.restaurants.length;
-  if (!state.restaurants.length) {
-    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🍽</div>No restaurants added yet</div>`;
-    return;
+  let html = '';
+  if (activeDay === 0) {
+    // Group by day
+    const groups = {};
+    items.forEach(i => { const k = i.day||0; (groups[k]||(groups[k]=[])).push(i); });
+    Object.keys(groups).sort((a,b)=>+a-+b).forEach(k => {
+      const d = +k;
+      const label = d === 0 ? 'Unscheduled' : `Day ${d} · ${DAYS[d-1]}`;
+      html += `<div class="day-group-label">${label}</div>`;
+      groups[k].forEach(i => { html += cardHtml(i, numMap[i.id]); });
+    });
+  } else {
+    items.forEach(i => { html += cardHtml(i, numMap[i.id]); });
   }
-  grid.innerHTML = state.restaurants.map(r => `
-    <div class="card ${r.flagged ? 'flagged restaurant' : ''}">
-      <div class="card-body">
-        <div class="card-top">
-          <div class="card-name">${r.name}</div>
-          <div class="card-actions">
-            <button class="action-btn flag-btn ${r.flagged ? 'active' : ''}" title="Flag" onclick="toggleFlag('restaurant',${r.id})">🚩</button>
-            <button class="action-btn" title="Delete" onclick="deleteItem('restaurant',${r.id})">✕</button>
-          </div>
-        </div>
-        <div class="card-meta">
-          <div class="card-detail"><span class="card-detail-icon">📅</span> ${r.date} · ${r.time}</div>
-          <div class="card-detail"><span class="card-detail-icon">🍴</span> ${r.cuisine}</div>
-          ${r.note ? `<div class="card-detail" style="color:var(--ink-light);font-style:italic;font-size:0.72rem">${r.note}</div>` : ''}
-        </div>
-        <div class="card-badges">
-          <span class="badge badge-${r.status}">${r.status.charAt(0).toUpperCase() + r.status.slice(1)}</span>
-          <span class="badge badge-${r.priority}">${r.priority === 'must' ? '⭐ Must-visit' : 'Optional'}</span>
-        </div>
-      </div>
-    </div>
-  `).join('');
+
+  area.innerHTML = html;
 }
 
-function renderPOIs() {
-  const grid = document.getElementById('pois-grid');
-  document.getElementById('poi-count').textContent = state.pois.length;
-  if (!state.pois.length) {
-    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📍</div>No places added yet</div>`;
-    return;
+function cardHtml(item, num) {
+  const sel = item.id === selectedId;
+  const unf = !item.flagged;
+
+  let metaA = '', metaB = '';
+  if (item.type === 'hotel') {
+    metaA = `<span class="pmeta">📅 ${item.dates}</span>`;
+    metaB = `<span class="pmeta">${stars(item.stars)}</span>`;
+  } else if (item.type === 'restaurant') {
+    metaA = `<span class="pmeta">🕐 ${item.time}</span>`;
+    metaB = `<span class="pmeta">🍴 ${item.cuisine}</span>`;
+  } else {
+    metaA = `<span class="pmeta">📅 ${item.date} ${item.time}</span>`;
+    metaB = `<span class="pmeta">🗂 ${item.category}</span>`;
   }
-  grid.innerHTML = state.pois.map(p => `
-    <div class="card ${p.flagged ? 'flagged poi' : ''}">
-      <div class="card-body">
-        <div class="card-top">
-          <div class="card-name">${p.name}</div>
-          <div class="card-actions">
-            <button class="action-btn flag-btn poi ${p.flagged ? 'active' : ''}" title="Flag" onclick="toggleFlag('poi',${p.id})">🚩</button>
-            <button class="action-btn" title="Delete" onclick="deleteItem('poi',${p.id})">✕</button>
-          </div>
-        </div>
-        <div class="card-meta">
-          <div class="card-detail"><span class="card-detail-icon">📅</span> ${p.date} · ${p.time}</div>
-          <div class="card-detail"><span class="card-detail-icon">🗂</span> ${p.category}</div>
-          ${p.note ? `<div class="card-detail" style="color:var(--ink-light);font-style:italic;font-size:0.72rem">${p.note}</div>` : ''}
-        </div>
-        <div class="card-badges">
-          <span class="badge badge-${p.priority}">${p.priority === 'must' ? '⭐ Must-see' : 'Optional'}</span>
-          ${p.flagged ? '<span class="badge badge-booked">Flagged</span>' : ''}
-        </div>
-      </div>
+
+  const statusB   = item.status   ? `<span class="pbadge pb-${item.status}">${item.status[0].toUpperCase()+item.status.slice(1)}</span>` : '';
+  const priorityB = item.priority === 'must' ? `<span class="pbadge pb-must">⭐ Must</span>` : item.priority ? `<span class="pbadge pb-optional">Optional</span>` : '';
+
+  return `<div class="place-card ${sel?'selected':''} ${unf?'unflagged':''}" onclick="selectCard(${item.id})">
+    <div class="place-num ${nClass(item.type)}">${num}</div>
+    <div class="place-body">
+      <div class="place-kind ${kClass(item.type)}">${typeLabel(item.type)}</div>
+      <div class="place-name">${item.name}</div>
+      <div class="place-meta-row">${metaA}${metaB}</div>
+      <div class="place-meta-row">${statusB}${priorityB}</div>
+      ${item.note ? `<div class="place-note">${item.note}</div>` : ''}
     </div>
-  `).join('');
-}
-
-function renderTimeline() {
-  const container = document.getElementById('timeline');
-  const d = days[activeDay];
-  container.innerHTML = d.items.map(item => `
-    <div class="timeline-item">
-      <span class="timeline-time">${item.time}</span>
-      <div class="timeline-dot dot-${item.type}"></div>
-      <div class="timeline-content">
-        <div class="timeline-name">${item.name}</div>
-        <div class="timeline-sub">${item.sub}</div>
-      </div>
-      <span class="timeline-type type-${item.type}">${item.type === 'poi' ? 'Place' : item.type.charAt(0).toUpperCase() + item.type.slice(1)}</span>
+    <div class="card-actions">
+      <button class="card-btn ${item.flagged?'on':''}" title="${item.flagged?'Remove from map':'Pin to map'}" onclick="event.stopPropagation();toggleFlag(${item.id})" >🚩</button>
+      <button class="card-btn" title="Delete" onclick="event.stopPropagation();deleteItem(${item.id})">🗑</button>
     </div>
-  `).join('');
+  </div>`;
 }
 
-function renderDayTabs() {
-  const container = document.getElementById('day-tabs');
-  container.innerHTML = days.map((d, i) => `
-    <button class="day-tab ${i === activeDay ? 'active' : ''}" onclick="setDay(${i})">${d.label}<br><span style="font-size:0.65rem;opacity:0.7">${d.date}</span></button>
-  `).join('');
-}
+const setTab = (tab, btn) => {
+  activeTab = tab;
+  document.querySelectorAll('.type-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCards();
+};
 
-function setDay(i) {
-  activeDay = i;
-  renderDayTabs();
-  renderTimeline();
-}
-
-function renderSummary() {
-  const all = [
-    ...state.hotels.filter(h => h.flagged).map(h => ({ name: h.name, type: 'hotel', status: h.status })),
-    ...state.restaurants.filter(r => r.flagged).map(r => ({ name: r.name, type: 'restaurant', status: r.status })),
-    ...state.pois.filter(p => p.flagged).map(p => ({ name: p.name, type: 'poi', status: 'flagged' })),
-  ];
-  const container = document.getElementById('summary-rows');
-  if (!all.length) {
-    container.innerHTML = `<div class="summary-row" style="color:var(--ink-light);font-style:italic;font-size:0.78rem;">Flag items to see them here</div>`;
-    return;
+function selectCard(id) {
+  selectedId = id;
+  renderCards();
+  const item = byId(id);
+  if (item && item.lat && item.lng && tripMap) {
+    tripMap.flyTo([item.lat, item.lng], 15, { duration: 0.7 });
+    const entry = allMarkers.find(m => m.id === id);
+    if (entry) entry.marker.openPopup();
   }
-  const colorMap = { hotel: '#1b4a6b', restaurant: '#c4623a', poi: '#2d5016' };
-  container.innerHTML = all.map(item => `
-    <div class="summary-row">
-      <div class="summary-dot" style="background:${colorMap[item.type]}"></div>
-      <span class="summary-row-name">${item.name}</span>
-      <span class="badge summary-row-badge badge-${item.status === 'flagged' ? 'booked' : item.status}">${item.status === 'flagged' ? 'Flagged' : item.status.charAt(0).toUpperCase() + item.status.slice(1)}</span>
-    </div>
-  `).join('');
 }
 
-function renderStats() {
-  document.getElementById('stat-hotels').textContent = state.hotels.length;
-  document.getElementById('stat-restaurants').textContent = state.restaurants.length;
-  document.getElementById('stat-pois').textContent = state.pois.length;
-  const confirmed = state.hotels.filter(h => h.status === 'confirmed').length
-    + state.restaurants.filter(r => r.status === 'confirmed').length;
-  document.getElementById('stat-confirmed').textContent = confirmed;
-}
-
-function renderAll() {
-  renderHotels();
-  renderRestaurants();
-  renderPOIs();
-  renderSummary();
-  renderStats();
-  renderDayTabs();
-  renderTimeline();
-}
-
-function toggleFlag(type, id) {
-  const list = state[type + 's'];
-  const item = list.find(i => i.id === id);
+// ─── ACTIONS ──────────────────────────────────────────────────────────
+function toggleFlag(id) {
+  const item = byId(id);
   if (item) item.flagged = !item.flagged;
   renderAll();
 }
-
-function deleteItem(type, id) {
-  const key = type + 's';
-  state[key] = state[key].filter(i => i.id !== id);
+function deleteItem(id) {
+  ['hotels','restaurants','pois'].forEach(k => { state[k] = state[k].filter(i => i.id !== id); });
+  if (selectedId === id) selectedId = null;
   renderAll();
 }
 
-function toggleCheck(el) {
-  el.classList.toggle('checked');
+// ─── MAP ──────────────────────────────────────────────────────────────
+let tripMap = null;
+let allMarkers = [];
+
+function pinIcon(color, num) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="position:relative;width:28px;height:38px">
+      <div style="width:28px;height:28px;background:${color};border:2.5px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,0.22);display:flex;align-items:center;justify-content:center">
+        <span style="transform:rotate(45deg);font-size:10px;font-weight:700;color:white;font-family:Inter,sans-serif;line-height:1">${num}</span>
+      </div>
+      <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:rgba(0,0,0,0.15);filter:blur(1.5px)"></div>
+    </div>`,
+    iconSize:[28,38], iconAnchor:[14,38], popupAnchor:[0,-40],
+  });
 }
 
-// MODAL
-const hotelForm = `
-  <div class="form-row"><label class="form-label">Hotel Name</label><input class="form-input" id="f-name" placeholder="e.g. Bairro Alto Hotel" /></div>
-  <div class="form-row-2">
-    <div class="form-row"><label class="form-label">Check-in</label><input class="form-input" id="f-checkin" type="date" /></div>
-    <div class="form-row"><label class="form-label">Check-out</label><input class="form-input" id="f-checkout" type="date" /></div>
-  </div>
-  <div class="form-row-2">
-    <div class="form-row"><label class="form-label">Star Rating</label>
-      <select class="form-select" id="f-stars"><option value="5">★★★★★ 5 stars</option><option value="4">★★★★ 4 stars</option><option value="3">★★★ 3 stars</option><option value="2">★★ 2 stars</option></select>
-    </div>
-    <div class="form-row"><label class="form-label">Status</label>
-      <select class="form-select" id="f-status"><option value="confirmed">Confirmed</option><option value="pending">Pending</option><option value="cancelled">Cancelled</option></select>
-    </div>
-  </div>
-  <div class="form-row"><label class="form-label">Notes</label><input class="form-input" id="f-note" placeholder="Room type, special requests…" /></div>
-`;
+function buildPopupHtml(item, num) {
+  const detailRows = item.type === 'hotel'
+    ? `<div class="popup-row">📅 ${item.dates} · ${item.nights}</div><div class="popup-row">⭐ ${stars(item.stars)}</div>`
+    : item.type === 'restaurant'
+    ? `<div class="popup-row">🕐 ${item.time}</div><div class="popup-row">🍴 ${item.cuisine}</div>`
+    : `<div class="popup-row">📅 ${item.date} · ${item.time}</div><div class="popup-row">🗂 ${item.category}</div>`;
 
-const restaurantForm = `
-  <div class="form-row"><label class="form-label">Restaurant Name</label><input class="form-input" id="f-name" placeholder="e.g. Belcanto" /></div>
-  <div class="form-row-2">
-    <div class="form-row"><label class="form-label">Date</label><input class="form-input" id="f-date" type="date" /></div>
-    <div class="form-row"><label class="form-label">Time</label><input class="form-input" id="f-time" type="time" /></div>
-  </div>
-  <div class="form-row"><label class="form-label">Cuisine Type</label><input class="form-input" id="f-cuisine" placeholder="e.g. Contemporary Portuguese" /></div>
-  <div class="form-row-2">
-    <div class="form-row"><label class="form-label">Status</label>
-      <select class="form-select" id="f-status"><option value="confirmed">Confirmed</option><option value="pending">Pending</option><option value="cancelled">Cancelled</option></select>
-    </div>
-    <div class="form-row"><label class="form-label">Priority</label>
-      <select class="form-select" id="f-priority"><option value="must">Must-visit</option><option value="optional">Optional</option></select>
-    </div>
-  </div>
-  <div class="form-row"><label class="form-label">Notes</label><input class="form-input" id="f-note" placeholder="Reservation number, dress code…" /></div>
-`;
+  const sB = item.status   ? `<span class="popup-badge ppb-${item.status}">${item.status[0].toUpperCase()+item.status.slice(1)}</span>` : '';
+  const pB = item.priority === 'must' ? `<span class="popup-badge ppb-must">⭐ Must</span>` : item.priority ? `<span class="popup-badge ppb-optional">Optional</span>` : '';
+  const gmaps = item.lat && item.lng
+    ? `<a class="popup-gmaps" href="https://www.google.com/maps/search/?api=1&query=${item.lat},${item.lng}&query_place_name=${encodeURIComponent(item.name)}" target="_blank">📍 Open in Google Maps ↗</a>`
+    : '';
 
-const poiForm = `
-  <div class="form-row"><label class="form-label">Place Name</label><input class="form-input" id="f-name" placeholder="e.g. Jerónimos Monastery" /></div>
-  <div class="form-row"><label class="form-label">Category</label><input class="form-input" id="f-category" placeholder="e.g. UNESCO Site, Museum, Viewpoint…" /></div>
-  <div class="form-row-2">
-    <div class="form-row"><label class="form-label">Date</label><input class="form-input" id="f-date" type="date" /></div>
-    <div class="form-row"><label class="form-label">Time</label><input class="form-input" id="f-time" type="time" /></div>
-  </div>
-  <div class="form-row"><label class="form-label">Priority</label>
-    <select class="form-select" id="f-priority"><option value="must">Must-see</option><option value="optional">Optional</option></select>
-  </div>
-  <div class="form-row"><label class="form-label">Notes</label><input class="form-input" id="f-note" placeholder="Tickets, tips, opening hours…" /></div>
-`;
+  return `<div class="popup-body">
+    <div class="popup-kind ${pkClass(item.type)}">${typeEmoji(item.type)} ${typeLabel(item.type)}</div>
+    <div class="popup-name">${item.name}</div>
+    ${detailRows}
+    <div class="popup-badges">${sB}${pB}</div>
+    ${item.note ? `<div class="popup-hr"></div><div class="popup-note">${item.note}</div>` : ''}
+    ${gmaps ? `<div class="popup-hr"></div>${gmaps}` : ''}
+  </div>`;
+}
+
+function initMap() {
+  tripMap = L.map('trip-map', { center:[38.718,-9.19], zoom:13, scrollWheelZoom:true });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains:'abcd', maxZoom:20,
+  }).addTo(tripMap);
+  refreshMapMarkers();
+}
+
+function refreshMapMarkers() {
+  if (!tripMap) return;
+  allMarkers.forEach(({ marker }) => tripMap.removeLayer(marker));
+  allMarkers = [];
+  const numMap = buildNumMap();
+
+  allItems().forEach(item => {
+    if (!item.lat || !item.lng) return;
+    const marker = L.marker([item.lat, item.lng], {
+      icon: pinIcon(typeColor(item.type), numMap[item.id]),
+      title: item.name,
+      opacity: item.flagged ? 1 : 0.35,
+    }).bindPopup(buildPopupHtml(item, numMap[item.id]), { maxWidth: 270 });
+    marker.on('click', () => { selectedId = item.id; renderCards(); });
+    allMarkers.push({ marker, type: item.type, id: item.id, flagged: item.flagged });
+  });
+  applyMapFilter();
+}
+
+function applyMapFilter() {
+  if (!tripMap) return;
+  allMarkers.forEach(({ marker, type }) => {
+    const show = activeMapFilter === 'all' || activeMapFilter === type;
+    show ? (tripMap.hasLayer(marker) || marker.addTo(tripMap))
+         : (tripMap.hasLayer(marker) && tripMap.removeLayer(marker));
+  });
+}
+
+function setMapFilter(filter, el) {
+  activeMapFilter = filter;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  applyMapFilter();
+}
+
+// ─── MODAL ────────────────────────────────────────────────────────────
+let currentType = '';
+
+const dayOptions = `<option value="0">— Unscheduled —</option>` +
+  DAYS.map((d,i) => `<option value="${i+1}">Day ${i+1} · ${d}</option>`).join('');
+
+const FORMS = {
+  hotel: `
+    <div class="frow"><label class="flabel">Hotel name</label><input class="finput" id="f-name" placeholder="e.g. Bairro Alto Hotel"/></div>
+    <div class="frow2">
+      <div class="frow"><label class="flabel">Check-in</label><input class="finput" id="f-checkin" type="date"/></div>
+      <div class="frow"><label class="flabel">Check-out</label><input class="finput" id="f-checkout" type="date"/></div>
+    </div>
+    <div class="frow2">
+      <div class="frow"><label class="flabel">Stars</label>
+        <select class="fselect" id="f-stars"><option value="5">5 ★★★★★</option><option value="4">4 ★★★★</option><option value="3">3 ★★★</option><option value="2">2 ★★</option></select>
+      </div>
+      <div class="frow"><label class="flabel">Status</label>
+        <select class="fselect" id="f-status"><option value="confirmed">Confirmed</option><option value="pending">Pending</option><option value="cancelled">Cancelled</option></select>
+      </div>
+    </div>
+    <div class="frow"><label class="flabel">Day</label><select class="fselect" id="f-day">${dayOptions}</select></div>
+    <div class="frow2">
+      <div class="frow"><label class="flabel">Latitude</label><input class="finput" id="f-lat" placeholder="38.7105"/></div>
+      <div class="frow"><label class="flabel">Longitude</label><input class="finput" id="f-lng" placeholder="-9.1426"/></div>
+    </div>
+    <div class="frow"><label class="flabel">Notes</label><input class="finput" id="f-note" placeholder="Room type, special requests…"/></div>`,
+  restaurant: `
+    <div class="frow"><label class="flabel">Restaurant name</label><input class="finput" id="f-name" placeholder="e.g. Belcanto"/></div>
+    <div class="frow2">
+      <div class="frow"><label class="flabel">Date</label><input class="finput" id="f-date" type="date"/></div>
+      <div class="frow"><label class="flabel">Time</label><input class="finput" id="f-time" type="time"/></div>
+    </div>
+    <div class="frow"><label class="flabel">Cuisine</label><input class="finput" id="f-cuisine" placeholder="e.g. Contemporary Portuguese"/></div>
+    <div class="frow2">
+      <div class="frow"><label class="flabel">Status</label>
+        <select class="fselect" id="f-status"><option value="confirmed">Confirmed</option><option value="pending">Pending</option><option value="cancelled">Cancelled</option></select>
+      </div>
+      <div class="frow"><label class="flabel">Priority</label>
+        <select class="fselect" id="f-priority"><option value="must">Must-visit</option><option value="optional">Optional</option></select>
+      </div>
+    </div>
+    <div class="frow"><label class="flabel">Day</label><select class="fselect" id="f-day">${dayOptions}</select></div>
+    <div class="frow2">
+      <div class="frow"><label class="flabel">Latitude</label><input class="finput" id="f-lat" placeholder="38.7101"/></div>
+      <div class="frow"><label class="flabel">Longitude</label><input class="finput" id="f-lng" placeholder="-9.1407"/></div>
+    </div>
+    <div class="frow"><label class="flabel">Notes</label><input class="finput" id="f-note" placeholder="Reservation number, dress code…"/></div>`,
+  poi: `
+    <div class="frow"><label class="flabel">Place name</label><input class="finput" id="f-name" placeholder="e.g. Jerónimos Monastery"/></div>
+    <div class="frow"><label class="flabel">Category</label><input class="finput" id="f-category" placeholder="e.g. Museum, Viewpoint, UNESCO Site…"/></div>
+    <div class="frow2">
+      <div class="frow"><label class="flabel">Date</label><input class="finput" id="f-date" type="date"/></div>
+      <div class="frow"><label class="flabel">Time</label><input class="finput" id="f-time" type="time"/></div>
+    </div>
+    <div class="frow"><label class="flabel">Priority</label>
+      <select class="fselect" id="f-priority"><option value="must">Must-see</option><option value="optional">Optional</option></select>
+    </div>
+    <div class="frow"><label class="flabel">Day</label><select class="fselect" id="f-day">${dayOptions}</select></div>
+    <div class="frow2">
+      <div class="frow"><label class="flabel">Latitude</label><input class="finput" id="f-lat" placeholder="38.6978"/></div>
+      <div class="frow"><label class="flabel">Longitude</label><input class="finput" id="f-lng" placeholder="-9.2067"/></div>
+    </div>
+    <div class="frow"><label class="flabel">Notes</label><input class="finput" id="f-note" placeholder="Tickets, tips, opening hours…"/></div>`,
+};
 
 function showModal(type) {
-  currentModalType = type;
-  const titles = { hotel: 'Add Hotel', restaurant: 'Add Restaurant', poi: 'Add Place' };
-  const forms = { hotel: hotelForm, restaurant: restaurantForm, poi: poiForm };
+  currentType = type;
+  const titles = { hotel:'Add hotel', restaurant:'Add restaurant', poi:'Add place' };
   document.getElementById('modal-title').textContent = titles[type];
-  document.getElementById('modal-body').innerHTML = forms[type];
-  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('modal-bd').innerHTML = FORMS[type];
+  document.getElementById('overlay').classList.add('open');
 }
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+function closeBg(e) { if (e.target === document.getElementById('overlay')) closeModal(); }
 
-function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('open');
+function fmtDate(v) {
+  if (!v) return 'TBD';
+  return new Date(v+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
 }
-
-function closeModalOnBg(e) {
-  if (e.target === document.getElementById('modal-overlay')) closeModal();
-}
-
-function fmtDate(val) {
-  if (!val) return 'TBD';
-  const d = new Date(val + 'T00:00:00');
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-function fmtTime(val) {
-  if (!val) return '';
-  const [h, m] = val.split(':');
-  const hr = parseInt(h);
-  return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`;
+function fmtTime(v) {
+  if (!v) return '';
+  const [h,m] = v.split(':'); const hr = +h;
+  return `${hr%12||12}:${m} ${hr>=12?'PM':'AM'}`;
 }
 
 function saveItem() {
   const name = document.getElementById('f-name')?.value.trim();
   if (!name) { alert('Please enter a name.'); return; }
-  const newId = Date.now();
+  const id  = Date.now();
+  const lat = parseFloat(document.getElementById('f-lat')?.value) || null;
+  const lng = parseFloat(document.getElementById('f-lng')?.value) || null;
+  const day = parseInt(document.getElementById('f-day')?.value) || 0;
+  const note= document.getElementById('f-note')?.value.trim() || '';
 
-  if (currentModalType === 'hotel') {
+  if (currentType === 'hotel') {
     const ci = document.getElementById('f-checkin').value;
     const co = document.getElementById('f-checkout').value;
-    const nights = ci && co ? Math.max(1, Math.round((new Date(co) - new Date(ci)) / 86400000)) + ' night(s)' : '';
-    state.hotels.push({
-      id: newId, name,
+    state.hotels.push({ id, type:'hotel', name,
       dates: ci && co ? `${fmtDate(ci)}–${fmtDate(co)}` : 'TBD',
-      nights,
-      stars: parseInt(document.getElementById('f-stars').value),
+      nights: ci && co ? `${Math.max(1,Math.round((new Date(co)-new Date(ci))/864e5))} night(s)` : '',
+      stars: +document.getElementById('f-stars').value,
       status: document.getElementById('f-status').value,
-      flagged: false,
-      note: document.getElementById('f-note').value.trim(),
-    });
-  } else if (currentModalType === 'restaurant') {
-    state.restaurants.push({
-      id: newId, name,
+      flagged:false, lat, lng, day, note });
+  } else if (currentType === 'restaurant') {
+    state.restaurants.push({ id, type:'restaurant', name,
       date: fmtDate(document.getElementById('f-date').value),
-      time: fmtTime(document.getElementById('f-time').value) || 'TBD',
-      cuisine: document.getElementById('f-cuisine').value.trim() || 'Restaurant',
+      time: fmtTime(document.getElementById('f-time').value)||'TBD',
+      cuisine: document.getElementById('f-cuisine').value.trim()||'Restaurant',
       status: document.getElementById('f-status').value,
       priority: document.getElementById('f-priority').value,
-      flagged: false,
-      note: document.getElementById('f-note').value.trim(),
-    });
-  } else if (currentModalType === 'poi') {
-    state.pois.push({
-      id: newId, name,
-      category: document.getElementById('f-category').value.trim() || 'Place',
+      flagged:false, lat, lng, day, note });
+  } else {
+    state.pois.push({ id, type:'poi', name,
+      category: document.getElementById('f-category').value.trim()||'Place',
       date: fmtDate(document.getElementById('f-date').value),
-      time: fmtTime(document.getElementById('f-time').value) || 'TBD',
+      time: fmtTime(document.getElementById('f-time').value)||'TBD',
       priority: document.getElementById('f-priority').value,
-      flagged: false,
-      note: document.getElementById('f-note').value.trim(),
-    });
+      flagged:false, lat, lng, day, note });
   }
-
   closeModal();
   renderAll();
 }
 
-renderAll();
-</script>
-<!-- Leaflet — loads from CDN when opened locally in a browser -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-// ── LEAFLET MAP ────────────────────────────────────────────────────────
-const MAP_DATA = {
-  restaurants: [
-    { id:1, name:'Belcanto',          lat:38.7101, lng:-9.1407, date:'Jun 15', time:'8:00 PM',  detail:'Contemporary Portuguese', status:'confirmed', priority:'must',     note:'2 Michelin stars · Book months ahead' },
-    { id:2, name:'Time Out Market',   lat:38.7063, lng:-9.1453, date:'Jun 14', time:'1:00 PM',  detail:'Food Hall',               status:'confirmed', priority:'must',     note:'Riverside · Great for first day' },
-    { id:3, name:'Tasca do Chico',    lat:38.7134, lng:-9.1369, date:'Jun 16', time:'9:00 PM',  detail:'Fado & Portuguese',       status:'pending',   priority:'must',     note:'Traditional fado house · Tiny & intimate' },
-    { id:4, name:'Cervejaria Ramiro', lat:38.7215, lng:-9.1347, date:'Jun 17', time:'7:30 PM',  detail:'Seafood',                 status:'confirmed', priority:'optional', note:'Famous prawns & crab' },
-    { id:5, name:'Pastéis de Belém',  lat:38.6973, lng:-9.2038, date:'Jun 19', time:'10:00 AM', detail:'Café / Pastries',         status:'confirmed', priority:'must',     note:'Original pastel de nata since 1837' },
-  ],
-  pois: [
-    { id:1, name:'Jerónimos Monastery',  lat:38.6978, lng:-9.2067, date:'Jun 19', time:'9:00 AM',  detail:'UNESCO Site',      priority:'must',     note:'Buy tickets online — skip queues' },
-    { id:2, name:'LX Factory',           lat:38.7033, lng:-9.1769, date:'Jun 15', time:'4:00 PM',  detail:'Market / Culture', priority:'optional', note:'Sunday market is best' },
-    { id:3, name:'Alfama / Tram 28',     lat:38.7141, lng:-9.1331, date:'Jun 14', time:'3:00 PM',  detail:'Experience',       priority:'must',     note:'Board at Martim Moniz to beat crowds' },
-    { id:4, name:'Castelo de São Jorge', lat:38.7139, lng:-9.1355, date:'Jun 16', time:'10:00 AM', detail:'Historic Site',    priority:'optional', note:'Panoramic views of Lisbon' },
-    { id:5, name:'MAAT Museum',          lat:38.7003, lng:-9.1884, date:'Jun 18', time:'2:00 PM',  detail:'Art Museum',       priority:'optional', note:'Contemporary art · Riverside' },
-    { id:6, name:'Sintra Day Trip',      lat:38.7975, lng:-9.3904, date:'Jun 20', time:'8:30 AM',  detail:'Day Trip',         priority:'must',     note:'Palácio Nacional + Pena Palace · Full day' },
-    { id:7, name:'Miradouro da Graça',   lat:38.7156, lng:-9.1317, date:'Jun 17', time:'6:30 PM',  detail:'Viewpoint',        priority:'optional', note:'Best sunset viewpoint in Lisbon' },
-  ]
-};
-
-let tripMap = null;
-let markerGroups = { restaurant: [], poi: [] };
-let activeMapFilter = 'all';
-
-function makePinIcon(color, emoji) {
-  return L.divIcon({
-    className: '',
-    html: `<div style="
-        position:relative; width:32px; height:40px;
-      ">
-      <div style="
-        width:32px; height:32px;
-        background:${color};
-        border:2.5px solid white;
-        border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);
-        box-shadow:0 3px 10px rgba(0,0,0,0.25);
-        display:flex; align-items:center; justify-content:center;
-      ">
-        <span style="transform:rotate(45deg); font-size:13px; line-height:1;">${emoji}</span>
-      </div>
-      <div style="
-        position:absolute; bottom:0; left:50%;
-        transform:translateX(-50%);
-        width:6px; height:6px; border-radius:50%;
-        background:rgba(0,0,0,0.2);
-        filter:blur(2px);
-      "></div>
-    </div>`,
-    iconSize: [32, 40],
-    iconAnchor: [16, 40],
-    popupAnchor: [0, -42],
-  });
+// ─── RENDER ALL ───────────────────────────────────────────────────────
+function renderAll() {
+  renderDayStrip();
+  renderCards();
+  refreshMapMarkers();
 }
 
-function statusBadge(status) {
-  const cls = { confirmed:'badge-confirmed-sm', pending:'badge-pending-sm', cancelled:'badge-cancelled-sm' };
-  const label = status.charAt(0).toUpperCase() + status.slice(1);
-  return `<span class="map-popup-badge ${cls[status]||'badge-confirmed-sm'}">${label}</span>`;
-}
-
-function priorityBadge(priority) {
-  return priority === 'must'
-    ? `<span class="map-popup-badge badge-must-sm">⭐ Must-visit</span>`
-    : `<span class="map-popup-badge badge-optional-sm">Optional</span>`;
-}
-
-function gmapsLink(lat, lng, name) {
-  const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}&query_place_name=${encodeURIComponent(name)}`;
-  return `<a href="${url}" target="_blank" class="map-popup-gmaps">📍 Open in Google Maps ↗</a>`;
-}
-
-function restaurantPopup(r) {
-  return `<div class="map-popup">
-    <div class="map-popup-type popup-restaurant">🍽 Restaurant</div>
-    <div class="map-popup-name">${r.name}</div>
-    <div class="map-popup-row">📅 ${r.date} &nbsp;·&nbsp; ${r.time}</div>
-    <div class="map-popup-row">🍴 ${r.detail}</div>
-    <div class="map-popup-badges">
-      ${statusBadge(r.status)}
-      ${priorityBadge(r.priority)}
-    </div>
-    ${r.note ? `<div class="map-popup-divider"></div><div class="map-popup-note">${r.note}</div>` : ''}
-    <div class="map-popup-divider"></div>
-    ${gmapsLink(r.lat, r.lng, r.name)}
-  </div>`;
-}
-
-function poiPopup(p) {
-  return `<div class="map-popup">
-    <div class="map-popup-type popup-poi">📍 Point of Interest</div>
-    <div class="map-popup-name">${p.name}</div>
-    <div class="map-popup-row">📅 ${p.date} &nbsp;·&nbsp; ${p.time}</div>
-    <div class="map-popup-row">🗂 ${p.detail}</div>
-    <div class="map-popup-badges">
-      ${priorityBadge(p.priority)}
-    </div>
-    ${p.note ? `<div class="map-popup-divider"></div><div class="map-popup-note">${p.note}</div>` : ''}
-    <div class="map-popup-divider"></div>
-    ${gmapsLink(p.lat, p.lng, p.name)}
-  </div>`;
-}
-
-function initMap() {
-  if (tripMap) { tripMap.remove(); tripMap = null; }
-
-  tripMap = L.map('trip-map', {
-    center: [38.7169, -9.1499],
-    zoom: 13,
-    scrollWheelZoom: true,
-    zoomControl: true,
-  });
-
-  // CartoDB Voyager — clean, elegant, no API key needed
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-    subdomains: 'abcd',
-    maxZoom: 19,
-  }).addTo(tripMap);
-
-  markerGroups = { restaurant: [], poi: [] };
-
-  // Restaurant markers
-  MAP_DATA.restaurants.forEach(r => {
-    const marker = L.marker([r.lat, r.lng], {
-      icon: makePinIcon('#c4623a', '🍽'),
-      title: r.name,
-    }).bindPopup(restaurantPopup(r), { maxWidth: 280, minWidth: 220 });
-    markerGroups.restaurant.push(marker);
-  });
-
-  // POI markers
-  MAP_DATA.pois.forEach(p => {
-    const marker = L.marker([p.lat, p.lng], {
-      icon: makePinIcon('#2d5016', '📍'),
-      title: p.name,
-    }).bindPopup(poiPopup(p), { maxWidth: 280, minWidth: 220 });
-    markerGroups.poi.push(marker);
-  });
-
-  applyFilter();
-}
-
-function applyFilter() {
-  if (!tripMap) return;
-  ['restaurant', 'poi'].forEach(type => {
-    markerGroups[type].forEach(m => {
-      const show = activeMapFilter === 'all' || activeMapFilter === type;
-      if (show) { if (!tripMap.hasLayer(m)) m.addTo(tripMap); }
-      else       { if (tripMap.hasLayer(m)) tripMap.removeLayer(m); }
-    });
-  });
-}
-
-function setMapFilter(filter, btn) {
-  activeMapFilter = filter;
-  document.querySelectorAll('.map-filter').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  applyFilter();
-}
-
-window.addEventListener('load', initMap);
+window.addEventListener('load', () => { initMap(); renderAll(); });
 </script>
 </body>
+</html>
